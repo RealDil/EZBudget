@@ -75,8 +75,8 @@ export default function ExpenseDetailSheet({ expense, onClose }) {
         <div className="flex items-center gap-3 mb-5 bg-gray-50 rounded-2xl px-4 py-3">
           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900">{cat.label}</p>
-            <p className="text-sm text-gray-700">{expense.userName} · {dateLabel(expense.timestamp)}</p>
+            <p className="font-semibold text-gray-900 mb-1">{cat.label}</p>
+            <p className="text-xs text-gray-700">{expense.userName} · {dateLabel(expense.timestamp)}</p>
             {email && <p className="text-xs text-ios-gray italic">{email}</p>}
           </div>
           <span className="font-bold text-gray-900 text-lg">{fmt(expense.amount)}</span>

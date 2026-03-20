@@ -6,10 +6,10 @@ import ExpenseDetailSheet from './ExpenseDetailSheet';
 function fmt(n) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
 }
-function timeLabel(ts) {
+function dateShort(ts) {
   if (!ts) return '';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export default function ExpenseList() {
@@ -71,7 +71,7 @@ export default function ExpenseList() {
                   )}
                 </p>
                 <p className="text-xs text-ios-gray">
-                  {expense.userName} · {timeLabel(expense.timestamp)}
+                  {expense.userName} · {dateShort(expense.timestamp)}
                   {!expense.note && <span className="text-gray-300 italic"> · hold to add note</span>}
                 </p>
               </div>
