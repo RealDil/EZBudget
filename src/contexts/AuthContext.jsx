@@ -115,6 +115,14 @@ export function AuthProvider({ children }) {
     await updateDoc(doc(db, 'linkRequests', requestId), { status: 'declined' });
   }
 
+  async function updateDisplayName(name) {
+    if (!user) return;
+    await updateProfile(user, { displayName: name });
+    await updateDoc(doc(db, 'users', user.uid), { firstName: name });
+    // Force re-render by updating the user object reference
+    setUser({ ...user, displayName: name });
+  }
+
   function friendlyError(code) {
     switch (code) {
       case 'auth/user-not-found':
@@ -143,6 +151,7 @@ export function AuthProvider({ children }) {
       user, loading, error, firstName,
       pendingInvites,
       login, signup, logout,
+      updateDisplayName,
       sendLinkRequest, acceptLinkRequest, declineLinkRequest,
     }}>
       {children}

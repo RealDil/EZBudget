@@ -64,12 +64,15 @@ export default function ExpenseList() {
 
               {/* Category + who + note */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{cat.label}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {cat.label}
+                  {expense.note && (
+                    <span className="font-normal text-ios-gray italic"> · {expense.note}</span>
+                  )}
+                </p>
                 <p className="text-xs text-ios-gray">
                   {expense.userName} · {timeLabel(expense.timestamp)}
-                  {expense.note ? ` · ${expense.note}` : (
-                    <span className="text-gray-300 italic"> hold to add note</span>
-                  )}
+                  {!expense.note && <span className="text-gray-300 italic"> · hold to add note</span>}
                 </p>
               </div>
 

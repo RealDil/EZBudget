@@ -5,12 +5,17 @@ import { CATEGORIES }  from '../constants';
 
 export default function SettingsScreen() {
   const { limits, updateLimits, categories } = useBudget();
-  const { user, logout, firstName, sendLinkRequest } = useAuth();
+  const { user, logout, firstName, sendLinkRequest, updateDisplayName } = useAuth();
   const [values,  setValues]  = useState({});
+  const [displayName, setDisplayName] = useState('');
+  const [nameSaving, setNameSaving]   = useState(false);
+  const [nameSaved, setNameSaved]     = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [inviteError, setInviteError] = useState('');
+
+  useEffect(() => { setDisplayName(firstName); }, [firstName]);
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState('');
@@ -80,6 +85,35 @@ export default function SettingsScreen() {
             className="text-ios-red text-sm font-medium"
           >
             Sign Out
+          </button>
+        </div>
+      </section>
+
+      {/* Display name */}
+      <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900">Display Name</h2>
+          <p className="text-xs text-ios-gray mt-0.5">Shown on expenses you add.</p>
+        </div>
+        <div className="px-4 py-3 flex gap-2">
+          <input
+            type="text"
+            value={displayName}
+            onChange={(e) => { setDisplayName(e.target.value); setNameSaved(false); }}
+            placeholder="Your name"
+            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-ios-blue"
+          />
+          <button
+            onClick={async () => {
+              if (!displayName.trim()) return;
+              setNameSaving(true);
+              await updateDisplayName(displayName.trim());
+              setNameSaving(false); setNameSaved(true);
+            }}
+            disabled={nameSaving || !displayName.trim()}
+            className="px-4 py-2.5 rounded-xl bg-ios-blue text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {nameSaving ? '…' : nameSaved ? 'Saved ✓' : 'Save'}
           </button>
         </div>
       </section>
