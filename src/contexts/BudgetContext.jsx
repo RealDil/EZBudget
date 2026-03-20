@@ -17,11 +17,14 @@ export function BudgetProvider({ children }) {
   const now          = new Date();
   const currentYear  = now.getFullYear();
   const currentMonth = now.getMonth(); // 0-indexed
-  const monthsElapsed = currentMonth + 1; // Jan=1, Apr=4, Dec=12
+
+  // 2026: budget year started in March (index 2). 2027+: full year from January.
+  const yearStartMonth = currentYear === 2026 ? 2 : 0;
+  const monthsElapsed  = currentMonth - yearStartMonth + 1;
 
   useEffect(() => {
-    // ── Expenses listener: all expenses from Jan 1 of this year ──────────────
-    const startOfYear = new Date(currentYear, 0, 1);
+    // ── Expenses listener: all expenses from start of budget year ─────────────
+    const startOfYear = new Date(currentYear, yearStartMonth, 1);
     const q = query(
       collection(db, 'expenses'),
       where('timestamp', '>=', Timestamp.fromDate(startOfYear)),
@@ -99,7 +102,10 @@ export function BudgetProvider({ children }) {
   // Returns the last N months as { year, month (0-indexed), label }
   function getLastNMonths(n) {
     const result = [];
-    for (let i = n - 1; i >= 0; i--) {
+    // Cap n so we don't go before the budget year start
+    const maxMonths = monthsElapsed;
+    const count = Math.min(n, maxMonths);
+    for (let i = count - 1; i >= 0; i--) {
       let m = currentMonth - i;
       let y = currentYear;
       if (m < 0) { m += 12; y -= 1; }
