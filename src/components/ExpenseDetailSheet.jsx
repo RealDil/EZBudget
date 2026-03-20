@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useBudget } from '../contexts/BudgetContext';
 import { CATEGORIES } from '../constants';
 
@@ -15,10 +17,20 @@ export default function ExpenseDetailSheet({ expense, onClose }) {
   const { updateExpense, categories } = useBudget();
   const catList = categories || CATEGORIES;
 
-  const [visible, setVisible] = useState(false);
-  const [note, setNote]       = useState(expense.note || '');
-  const [saving, setSaving]   = useState(false);
+  const [visible, setVisible]   = useState(false);
+  const [note, setNote]         = useState(expense.note || '');
+  const [saving, setSaving]     = useState(false);
+  const [email, setEmail]       = useState(expense.userEmail || '');
   const textRef = useRef(null);
+
+  // Look up email from user profile if not stored on the expense
+  useEffect(() => {
+    if (!expense.userEmail && expense.userId) {
+      getDoc(doc(db, 'users', expense.userId)).then((snap) => {
+        if (snap.exists()) setEmail(snap.data().email || '');
+      }).catch(() => {});
+    }
+  }, [expense.userId, expense.userEmail]);
 
   const cat = catList.find((c) => c.id === expense.category) || { label: expense.category, color: '#8E8E93' };
 
@@ -64,11 +76,8 @@ export default function ExpenseDetailSheet({ expense, onClose }) {
           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900">{cat.label}</p>
-            <p className="text-sm text-gray-700">{expense.userName}</p>
-            {expense.userEmail && (
-              <p className="text-xs text-ios-gray italic">{expense.userEmail}</p>
-            )}
-            <p className="text-xs text-ios-gray mt-0.5">{dateLabel(expense.timestamp)}</p>
+            <p className="text-sm text-gray-700">{expense.userName} · {dateLabel(expense.timestamp)}</p>
+            {email && <p className="text-xs text-ios-gray italic">{email}</p>}
           </div>
           <span className="font-bold text-gray-900 text-lg">{fmt(expense.amount)}</span>
         </div>
