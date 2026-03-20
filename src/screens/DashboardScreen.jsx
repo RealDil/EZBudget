@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useBudget }      from '../contexts/BudgetContext';
 import CategoryCard       from '../components/CategoryCard';
 import ExpenseList        from '../components/ExpenseList';
-import { CATEGORIES }     from '../constants';
+import AddCategorySheet   from '../components/AddCategorySheet';
 
 function fmt(n) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -10,11 +11,13 @@ function fmt(n) {
 export default function DashboardScreen() {
   const {
     loading,
+    categories,
     totalSpentThisMonth,
     totalBudget,
     totalYTDNet,
-    monthsElapsed,
   } = useBudget();
+
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
   if (loading) {
     return (
@@ -33,9 +36,20 @@ export default function DashboardScreen() {
   return (
     <div className="px-4 pt-4 space-y-3">
       {/* Category cards */}
-      {CATEGORIES.map((cat) => (
+      {categories.map((cat) => (
         <CategoryCard key={cat.id} category={cat} />
       ))}
+
+      {/* Add category button */}
+      <button
+        onClick={() => setShowAddCategory(true)}
+        className="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 text-ios-gray text-sm font-semibold flex items-center justify-center gap-2 active:opacity-60 transition-opacity"
+      >
+        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        </svg>
+        Add Category
+      </button>
 
       {/* Total summary card */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -68,6 +82,10 @@ export default function DashboardScreen() {
           <ExpenseList />
         </div>
       </div>
+
+      {showAddCategory && (
+        <AddCategorySheet onClose={() => setShowAddCategory(false)} />
+      )}
     </div>
   );
 }

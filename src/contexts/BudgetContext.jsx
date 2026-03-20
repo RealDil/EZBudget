@@ -2,16 +2,17 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import {
   collection, query, where, orderBy,
   onSnapshot, addDoc, deleteDoc,
-  doc, setDoc, serverTimestamp, Timestamp,
+  doc, setDoc, Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CATEGORIES, DEFAULT_LIMITS } from '../constants';
+import { DEFAULT_CATEGORIES, DEFAULT_LIMITS } from '../constants';
 
 const BudgetContext = createContext(null);
 
 export function BudgetProvider({ children }) {
   const [allYearExpenses, setAllYearExpenses] = useState([]);
   const [limits, setLimits]                   = useState(DEFAULT_LIMITS);
+  const [categories, setCategories]           = useState(DEFAULT_CATEGORIES);
   const [loading, setLoading]                 = useState(true);
 
   const now          = new Date();
@@ -43,9 +44,11 @@ export function BudgetProvider({ children }) {
     const settingsRef = doc(db, 'settings', 'budget');
     const unsubSettings = onSnapshot(settingsRef, (snap) => {
       if (snap.exists()) {
-        setLimits(snap.data().limits);
+        const data = snap.data();
+        if (data.limits)     setLimits(data.limits);
+        if (data.categories) setCategories(data.categories);
       } else {
-        setDoc(settingsRef, { limits: DEFAULT_LIMITS });
+        setDoc(settingsRef, { limits: DEFAULT_LIMITS, categories: DEFAULT_CATEGORIES });
       }
     });
 
@@ -67,7 +70,7 @@ export function BudgetProvider({ children }) {
   // Spending per category (this month and YTD)
   const thisMonthByCategory = {};
   const ytdByCategory       = {};
-  CATEGORIES.forEach((cat) => {
+  categories.forEach((cat) => {
     thisMonthByCategory[cat.id] = 0;
     ytdByCategory[cat.id]       = 0;
   });
@@ -85,13 +88,13 @@ export function BudgetProvider({ children }) {
   // YTD budget and net per category
   const ytdBudgetByCategory = {};
   const ytdNetByCategory    = {};
-  CATEGORIES.forEach((cat) => {
+  categories.forEach((cat) => {
     ytdBudgetByCategory[cat.id] = (limits[cat.id] || 0) * monthsElapsed;
     ytdNetByCategory[cat.id]    = ytdBudgetByCategory[cat.id] - ytdByCategory[cat.id];
   });
 
   // Overall totals
-  const totalBudget        = CATEGORIES.reduce((s, c) => s + (limits[c.id] || 0), 0);
+  const totalBudget        = categories.reduce((s, c) => s + (limits[c.id] || 0), 0);
   const totalSpentThisMonth = Object.values(thisMonthByCategory).reduce((a, b) => a + b, 0);
   const totalYTDBudget     = totalBudget * monthsElapsed;
   const totalYTDSpent      = Object.values(ytdByCategory).reduce((a, b) => a + b, 0);
@@ -139,8 +142,30 @@ export function BudgetProvider({ children }) {
     await deleteDoc(doc(db, 'expenses', id));
   }
 
+  const settingsRef = doc(db, 'settings', 'budget');
+
   async function updateLimits(newLimits) {
-    await setDoc(doc(db, 'settings', 'budget'), { limits: newLimits });
+    await setDoc(settingsRef, { limits: newLimits }, { merge: true });
+  }
+
+  async function updateCategory(id, { label, color, limit }) {
+    const updated = categories.map((c) =>
+      c.id === id ? { ...c, label, color, defaultLimit: limit } : c
+    );
+    const newLimits = { ...limits, [id]: limit };
+    await setDoc(settingsRef, { categories: updated, limits: newLimits }, { merge: true });
+  }
+
+  async function addCategory({ label, color, limit }) {
+    const id = label.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString(36);
+    const updated = [...categories, { id, label, color, defaultLimit: limit }];
+    const newLimits = { ...limits, [id]: limit };
+    await setDoc(settingsRef, { categories: updated, limits: newLimits }, { merge: true });
+  }
+
+  async function deleteCategory(id) {
+    const updated = categories.filter((c) => c.id !== id);
+    await setDoc(settingsRef, { categories: updated }, { merge: true });
   }
 
   return (
@@ -150,6 +175,7 @@ export function BudgetProvider({ children }) {
         allYearExpenses,
         thisMonthExpenses,
         limits,
+        categories,
         currentYear,
         currentMonth,
         monthsElapsed,
@@ -165,6 +191,9 @@ export function BudgetProvider({ children }) {
         addExpense,
         deleteExpense,
         updateLimits,
+        updateCategory,
+        addCategory,
+        deleteCategory,
         getLastNMonths,
         getExpensesForMonth,
       }}
