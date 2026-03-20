@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const tabs = [
@@ -50,7 +51,19 @@ const tabs = [
 ];
 
 export default function Layout({ children, tab, onTabChange, onAddExpense }) {
-  const { firstName, logout } = useAuth();
+  const { firstName, logout, pendingInvites, acceptLinkRequest, declineLinkRequest } = useAuth();
+  const [dismissedInvites, setDismissedInvites] = useState([]);
+
+  const visibleInvites = (pendingInvites || []).filter((inv) => !dismissedInvites.includes(inv.id));
+
+  async function handleAccept(inv) {
+    await acceptLinkRequest(inv.id, inv.fromUid);
+    setDismissedInvites((d) => [...d, inv.id]);
+  }
+  async function handleDecline(inv) {
+    await declineLinkRequest(inv.id);
+    setDismissedInvites((d) => [...d, inv.id]);
+  }
   const now = new Date();
   const monthLabel = now.toLocaleString('default', { month: 'long', year: 'numeric' });
 
@@ -69,6 +82,30 @@ export default function Layout({ children, tab, onTabChange, onAddExpense }) {
           Sign Out
         </button>
       </header>
+
+      {/* Pending link invites */}
+      {visibleInvites.map((inv) => (
+        <div key={inv.id} className="bg-ios-blue px-4 py-3 flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-semibold truncate">
+              {inv.fromName} wants to link budgets with you
+            </p>
+            <p className="text-blue-100 text-xs truncate">{inv.fromEmail}</p>
+          </div>
+          <button
+            onClick={() => handleDecline(inv)}
+            className="text-blue-100 text-sm font-medium px-2"
+          >
+            Decline
+          </button>
+          <button
+            onClick={() => handleAccept(inv)}
+            className="bg-white text-ios-blue text-sm font-semibold px-3 py-1.5 rounded-lg"
+          >
+            Accept
+          </button>
+        </div>
+      ))}
 
       {/* Scrollable content */}
       <main className="flex-1 overflow-y-auto pb-32">

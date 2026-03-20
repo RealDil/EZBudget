@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import {
   collection, query, where, orderBy,
-  onSnapshot, addDoc, deleteDoc,
+  onSnapshot, addDoc, deleteDoc, updateDoc,
   doc, setDoc, Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -142,6 +142,10 @@ export function BudgetProvider({ children }) {
     await deleteDoc(doc(db, 'expenses', id));
   }
 
+  async function updateExpense(id, fields) {
+    await updateDoc(doc(db, 'expenses', id), fields);
+  }
+
   const settingsRef = doc(db, 'settings', 'budget');
 
   async function updateLimits(newLimits) {
@@ -190,6 +194,7 @@ export function BudgetProvider({ children }) {
         totalYTDNet,
         addExpense,
         deleteExpense,
+        updateExpense,
         updateLimits,
         updateCategory,
         addCategory,
