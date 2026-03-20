@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import {
-  doc, setDoc, getDoc, collection, addDoc, updateDoc,
+  doc, setDoc, getDoc, collection, addDoc, updateDoc, getDocs,
   query, where, onSnapshot, serverTimestamp, writeBatch, arrayUnion,
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -119,7 +119,15 @@ export function AuthProvider({ children }) {
     if (!user) return;
     await updateProfile(user, { displayName: name });
     await updateDoc(doc(db, 'users', user.uid), { firstName: name });
-    // Force re-render by updating the user object reference
+
+    // Batch-update userName on all historical expenses for this user
+    const snap = await getDocs(query(collection(db, 'expenses'), where('userId', '==', user.uid)));
+    if (!snap.empty) {
+      const batch = writeBatch(db);
+      snap.docs.forEach((d) => batch.update(d.ref, { userName: name }));
+      await batch.commit();
+    }
+
     setUser({ ...user, displayName: name });
   }
 

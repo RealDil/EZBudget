@@ -44,6 +44,7 @@ export default function AddExpenseSheet({ onClose }) {
         category,
         userId: user.uid,
         userName: firstName || user.email.split('@')[0],
+        userEmail: user.email,
       });
       handleClose();
     } catch (err) {

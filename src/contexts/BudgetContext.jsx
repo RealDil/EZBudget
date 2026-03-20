@@ -128,12 +128,13 @@ export function BudgetProvider({ children }) {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  async function addExpense({ amount, category, userId, userName }) {
+  async function addExpense({ amount, category, userId, userName, userEmail }) {
     await addDoc(collection(db, 'expenses'), {
       amount: parseFloat(amount),
       category,
       userId,
       userName,
+      userEmail: userEmail || null,
       timestamp: Timestamp.now(),
     });
   }
